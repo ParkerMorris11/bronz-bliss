@@ -4,29 +4,83 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ThemeProvider, useTheme } from "@/components/theme-provider";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Dashboard from "@/pages/dashboard";
+import CalendarPage from "@/pages/calendar";
+import ClientsPage from "@/pages/clients";
+import ClientDetailPage from "@/pages/client-detail";
+import ServicesPage from "@/pages/services";
+import PackagesPage from "@/pages/packages";
+import CheckInPage from "@/pages/check-in";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
+import { apiRequest } from "@/lib/queryClient";
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
+      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </Button>
+  );
+}
 
 function AppRouter() {
   return (
     <Switch>
-      {/* Register a <Route path="..." component={...} /> for EVERY page linked in your sidebar/nav. Missing routes cause 404. */}
-      {/* <Route path="/" component={Home}/> */}
+      <Route path="/" component={Dashboard} />
+      <Route path="/calendar" component={CalendarPage} />
+      <Route path="/clients" component={ClientsPage} />
+      <Route path="/clients/:id" component={ClientDetailPage} />
+      <Route path="/services" component={ServicesPage} />
+      <Route path="/packages" component={PackagesPage} />
+      <Route path="/check-in/:id" component={CheckInPage} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+function SeedOnMount() {
+  useEffect(() => {
+    apiRequest("POST", "/api/seed").catch(() => {});
+  }, []);
+  return null;
+}
+
+export default function App() {
+  const style = {
+    "--sidebar-width": "15rem",
+    "--sidebar-width-icon": "3.5rem",
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router hook={useHashLocation}>
-          <AppRouter />
-        </Router>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <SidebarProvider style={style as React.CSSProperties}>
+            <div className="flex h-screen w-full overflow-hidden">
+              <AppSidebar />
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <header className="flex items-center justify-between gap-1 px-4 py-2 border-b shrink-0">
+                  <SidebarTrigger data-testid="button-sidebar-toggle" />
+                  <ThemeToggle />
+                </header>
+                <main className="flex-1 overflow-y-auto">
+                  <Router hook={useHashLocation}>
+                    <SeedOnMount />
+                    <AppRouter />
+                  </Router>
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+          <Toaster />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;
