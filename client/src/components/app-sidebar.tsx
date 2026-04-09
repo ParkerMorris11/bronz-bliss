@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const mainItems = [
@@ -37,6 +38,12 @@ function isActive(location: string, url: string) {
 
 export function AppSidebar() {
   const [location, navigate] = useHashLocation();
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  const go = (url: string) => {
+    navigate(url);
+    if (isMobile) setOpenMobile(false);
+  };
 
   return (
     <Sidebar>
@@ -55,7 +62,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                    onClick={() => navigate(item.url)}
+                    onClick={() => go(item.url)}
                     className="cursor-pointer"
                   >
                     <item.icon className="w-4 h-4" />
@@ -75,7 +82,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                    onClick={() => navigate(item.url)}
+                    onClick={() => go(item.url)}
                     className="cursor-pointer"
                   >
                     <item.icon className="w-4 h-4" />
