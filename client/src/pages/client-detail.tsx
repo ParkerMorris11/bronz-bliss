@@ -48,7 +48,7 @@ export default function ClientDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 max-w-4xl">
+      <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -64,7 +64,7 @@ export default function ClientDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="p-6 space-y-5">
       <div className="flex items-center gap-3">
         <Link href="/clients">
           <Button size="icon" variant="ghost" data-testid="button-back">

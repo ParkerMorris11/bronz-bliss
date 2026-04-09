@@ -1,5 +1,6 @@
-import { LayoutDashboard, CalendarDays, Users, Sparkles, Package, Settings, Sun, ClipboardCheck, BarChart3, Boxes, MessageSquare } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { LayoutDashboard, CalendarDays, Users, Sparkles, Package, Settings, Sun, ClipboardCheck, BarChart3, Boxes } from "lucide-react";
+import { Link } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import {
   Sidebar,
   SidebarContent,
@@ -28,14 +29,19 @@ const manageItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+function isActive(location: string, url: string) {
+  if (url === "/") return location === "/";
+  return location === url || location.startsWith(url + "/");
+}
+
 export function AppSidebar() {
-  const [location] = useLocation();
+  const [location] = useHashLocation();
 
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
             <Sun className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="text-base font-bold tracking-tight" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
@@ -45,14 +51,14 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    data-active={location === item.url || (item.url !== "/" && location.startsWith(item.url))}
+                    data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     <Link href={item.url}>
@@ -66,14 +72,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Manage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {manageItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    data-active={location === item.url || (item.url !== "/" && location.startsWith(item.url))}
+                    data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     <Link href={item.url}>
@@ -88,7 +94,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <p className="text-xs text-muted-foreground">Cedar City, UT</p>
+        <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">Cedar City, UT</p>
       </SidebarFooter>
     </Sidebar>
   );

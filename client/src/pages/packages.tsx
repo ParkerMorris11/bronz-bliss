@@ -87,7 +87,7 @@ export default function PackagesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Packages

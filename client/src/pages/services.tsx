@@ -21,10 +21,10 @@ const categories = [
 ];
 
 const categoryColors: Record<string, string> = {
-  spray_tan: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  booth_tan: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  bed_tan: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  other: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
+  spray_tan: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+  booth_tan: "bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800",
+  bed_tan: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
+  other: "bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-900/40 dark:text-gray-400 dark:border-gray-700",
 };
 
 export default function ServicesPage() {
@@ -66,14 +66,14 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Services
         </h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-new-service">
+            <Button size="sm" data-testid="button-new-service">
               <Plus className="w-4 h-4 mr-1" /> New Service
             </Button>
           </DialogTrigger>
@@ -155,12 +155,13 @@ export default function ServicesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="secondary" className={`text-xs ${categoryColors[svc.category] || ""}`}>
+                    <Badge variant="outline" className={`text-[10px] font-medium px-2 py-0.5 ${categoryColors[svc.category] || ""}`}>
                       {categories.find((c) => c.value === svc.category)?.label || svc.category}
                     </Badge>
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="h-7 text-xs text-muted-foreground"
                       onClick={() => toggleMutation.mutate({ id: svc.id, isActive: !svc.isActive })}
                       data-testid={`button-toggle-${svc.id}`}
                     >
