@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import GlobalSearch from "@/components/global-search";
 import Dashboard from "@/pages/dashboard";
 import CalendarPage from "@/pages/calendar";
 import ClientsPage from "@/pages/clients";
@@ -24,6 +25,7 @@ import BookingPage from "@/pages/booking";
 import OnboardingPage from "@/pages/onboarding";
 import LandingPage from "@/pages/landing";
 import MessagesPage from "@/pages/messages";
+import PromoCodesPage from "@/pages/promo-codes";
 import GiftCardsPage from "@/pages/gift-cards";
 import WaitlistPage from "@/pages/waitlist-page";
 import LoginPage from "@/pages/login";
@@ -72,9 +74,12 @@ function AppShell() {
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between gap-1 px-4 py-2.5 border-b border-border/50 shrink-0">
+          <header className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/50 shrink-0">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <ThemeToggle />
+            </div>
           </header>
           <main className="flex-1 overflow-y-auto glass-bg">
             <Switch>
@@ -90,6 +95,7 @@ function AppShell() {
               <Route path="/inventory" component={InventoryPage} />
               <Route path="/settings" component={SettingsPage} />
               <Route path="/messages" component={MessagesPage} />
+              <Route path="/promo-codes" component={PromoCodesPage} />
               <Route path="/gift-cards" component={GiftCardsPage} />
               <Route path="/waitlist" component={WaitlistPage} />
               <Route component={NotFound} />

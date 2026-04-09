@@ -795,6 +795,16 @@ export async function registerRoutes(server: Server, app: Express) {
     storage.createWaitlistEntry({ clientId: null, firstName: "Ava", lastName: "Williams", phone: "435-555-0190", email: "ava@email.com", serviceId: s1.id, preferredDate: today, status: "waiting", notes: "First time, wants afternoon slot", createdAt: today });
     storage.createWaitlistEntry({ clientId: null, firstName: "Sophia", lastName: "Brown", phone: "435-555-0191", email: null, serviceId: s5.id, preferredDate: today, status: "waiting", notes: null, createdAt: yesterday });
 
+    // Promo Codes
+    storage.createPromoCode({ code: "GLOW20", discountType: "percent", discountValue: 20, maxUses: 50, usedCount: 12, expiresAt: "2026-12-31", isActive: true, createdAt: "2026-03-01" });
+    storage.createPromoCode({ code: "NEWCLIENT", discountType: "fixed", discountValue: 10, maxUses: null, usedCount: 5, expiresAt: null, isActive: true, createdAt: "2026-01-15" });
+    storage.createPromoCode({ code: "BRIDE15", discountType: "percent", discountValue: 15, maxUses: 10, usedCount: 10, expiresAt: "2026-06-01", isActive: true, createdAt: "2026-02-01" });
+
+    // Loyalty Points (demo)
+    storage.createLoyaltyEntry({ clientId: c1.id, points: 50, reason: "earned_visit", appointmentId: 5, createdAt: yesterday });
+    storage.createLoyaltyEntry({ clientId: c5.id, points: 50, reason: "earned_visit", appointmentId: 6, createdAt: twoDaysAgo });
+    storage.createLoyaltyEntry({ clientId: c1.id, points: 25, reason: "earned_referral", appointmentId: null, createdAt: "2026-03-01" });
+
     res.json({ message: "Demo data seeded" });
   });
 }
