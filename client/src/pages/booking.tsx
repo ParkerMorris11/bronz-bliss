@@ -454,7 +454,7 @@ export default function BookingPage() {
                 You're booked!
               </h2>
               <p className="text-sm text-stone-950 mt-1">
-                We'll see you soon. Check your phone for a confirmation.
+                We'll see you soon.{form.phone ? " Check your phone for a confirmation." : ""}
               </p>
             </div>
             <div className="rounded-xl bg-white border p-4 text-left space-y-2 max-w-xs mx-auto">

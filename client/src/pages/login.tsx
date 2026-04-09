@@ -71,9 +71,6 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
           </form>
         </div>
 
-        <p className="text-[10px] text-muted-foreground/50 text-center mt-6">
-          Cedar City, UT
-        </p>
       </div>
     </div>
   );

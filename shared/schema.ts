@@ -215,6 +215,8 @@ export const businessSettings = sqliteTable("business_settings", {
   rebookingTemplate: text("rebooking_template"),
   // Operating hours (JSON: { mon: { open: "09:00", close: "18:00" }, ... })
   operatingHours: text("operating_hours"),
+  // Accepted payment methods (JSON array: ["card","cash","venmo","zelle","applepay","other"])
+  acceptedPaymentMethods: text("accepted_payment_methods"),
 });
 export const insertBusinessSettingsSchema = createInsertSchema(businessSettings).omit({ id: true });
 export type InsertBusinessSettings = z.infer<typeof insertBusinessSettingsSchema>;

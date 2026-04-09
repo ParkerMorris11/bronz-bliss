@@ -22,7 +22,7 @@ import {
   loyaltyPoints, type InsertLoyaltyPoints, type LoyaltyPoints,
 } from "@shared/schema";
 
-const sqlite = new Database("bronzbliss.db");
+const sqlite = new Database(process.env.DB_PATH || "bronzbliss.db");
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 export const db = drizzle(sqlite);
@@ -173,7 +173,8 @@ sqlite.exec(`
     rinse_template TEXT,
     aftercare_template TEXT,
     rebooking_template TEXT,
-    operating_hours TEXT
+    operating_hours TEXT,
+    accepted_payment_methods TEXT
   );
   CREATE TABLE IF NOT EXISTS gift_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -220,6 +221,10 @@ sqlite.exec(`
     created_at TEXT NOT NULL
   );
 `);
+
+// Migrations for existing databases
+try { sqlite.exec(`ALTER TABLE business_settings ADD COLUMN accepted_payment_methods TEXT`); } catch {}
+
 
 export interface IStorage {
   // Services

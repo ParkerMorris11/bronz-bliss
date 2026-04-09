@@ -2,6 +2,15 @@ import type { Express } from "express";
 import type { Server } from "http";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
+import twilio from "twilio";
+
+declare global {
+  namespace Express {
+    interface Request {
+      validated: any;
+    }
+  }
+}
 import {
   insertServiceSchema,
   insertClientSchema,
@@ -46,6 +55,17 @@ export async function registerRoutes(server: Server, app: Express) {
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {});
+    res.json({ success: true });
+  });
+
+  app.post("/api/auth/change-password", async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: "Invalid request. New password must be at least 8 characters." });
+    }
+    const match = ADMIN_HASH && await bcrypt.compare(currentPassword, ADMIN_HASH);
+    if (!match) return res.status(401).json({ error: "Current password is incorrect." });
+    ADMIN_HASH = await bcrypt.hash(newPassword, 10);
     res.json({ success: true });
   });
 
@@ -284,9 +304,25 @@ export async function registerRoutes(server: Server, app: Express) {
     res.status(201).json(log);
   });
 
-  // ── SMS Send (mock — logs message, simulates Twilio) ──
-  app.post("/api/sms/send", (req, res) => {
+  // ── SMS Send ──────────────────────────────────────────
+  app.post("/api/sms/send", async (req, res) => {
     const { clientId, appointmentId, type, to, body } = req.body;
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_FROM_NUMBER;
+    let status = "sent";
+    let errorMsg: string | undefined;
+    if (sid && token && from && to) {
+      try {
+        const client = twilio(sid, token);
+        await client.messages.create({ to, from, body });
+      } catch (err: any) {
+        status = "failed";
+        errorMsg = err.message;
+      }
+    } else {
+      status = "simulated";
+    }
     const log = storage.createMessageLog({
       clientId,
       appointmentId: appointmentId || null,
@@ -294,10 +330,10 @@ export async function registerRoutes(server: Server, app: Express) {
       channel: "sms",
       to,
       body,
-      status: "sent",
+      status,
       sentAt: new Date().toISOString(),
     });
-    res.status(201).json({ ...log, mock: true, note: "SMS simulated — connect Twilio for real delivery" });
+    res.status(201).json({ ...log, ...(errorMsg ? { error: errorMsg } : {}) });
   });
 
   // ── Inventory Items ───────────────────────────────────
@@ -399,15 +435,11 @@ export async function registerRoutes(server: Server, app: Express) {
 
     // Determine operating hours for this day
     const dayOfWeek = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
-    const DAY_KEYS: Record<string, string> = {
-      Monday: "mon", Tuesday: "tue", Wednesday: "wed", Thursday: "thu",
-      Friday: "fri", Saturday: "sat", Sunday: "sun",
-    };
     let openMin = 9 * 60, closeMin = 18 * 60, isOpen = true;
     if (settings.operatingHours) {
       try {
         const hours = JSON.parse(settings.operatingHours);
-        const dayHours = hours[DAY_KEYS[dayOfWeek]];
+        const dayHours = hours[dayOfWeek];
         if (!dayHours) { isOpen = false; }
         else {
           const [oh, om] = (dayHours.open || "09:00").split(":").map(Number);

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Building2, Clock, Bell, Calendar, Link, Copy, Check } from "lucide-react";
+import { Save, Building2, Clock, Bell, Calendar, Link, Copy, Check, Lock, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { BusinessSettings } from "@shared/schema";
 
@@ -77,6 +77,17 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
+  // Payment Methods
+  const ALL_PAYMENT_METHODS = [
+    { value: "card", label: "Card" },
+    { value: "cash", label: "Cash" },
+    { value: "venmo", label: "Venmo" },
+    { value: "zelle", label: "Zelle" },
+    { value: "applepay", label: "Apple Pay" },
+    { value: "other", label: "Other" },
+  ];
+  const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<string[]>(["card", "cash", "venmo"]);
+
   // Section 2: Booking Rules
   const [depositRequired, setDepositRequired] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
@@ -115,6 +126,10 @@ export default function SettingsPage() {
     setRinseTemplate(settings.rinseTemplate ?? "");
     setAftercareTemplate(settings.aftercareTemplate ?? "");
     setRebookingTemplate(settings.rebookingTemplate ?? "");
+    try {
+      const methods = settings.acceptedPaymentMethods ? JSON.parse(settings.acceptedPaymentMethods) : null;
+      if (Array.isArray(methods) && methods.length > 0) setAcceptedPaymentMethods(methods);
+    } catch {}
   }, [settings]);
 
   const mutation = useMutation({
@@ -141,6 +156,7 @@ export default function SettingsPage() {
       bookingEnabled,
       bookingNotice: Number(bookingNotice),
       operatingHours: serializeOperatingHours(operatingHours),
+      acceptedPaymentMethods: JSON.stringify(acceptedPaymentMethods),
       confirmationTemplate: confirmationTemplate || null,
       prepTemplate: prepTemplate || null,
       rinseTemplate: rinseTemplate || null,
@@ -157,6 +173,32 @@ export default function SettingsPage() {
   }
 
   // Booking link — must be before any conditional returns
+  // Section 5: Change Password
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const changePasswordMutation = useMutation({
+    mutationFn: (payload: { currentPassword: string; newPassword: string }) =>
+      apiRequest("POST", "/api/auth/change-password", payload),
+    onSuccess: () => {
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setPasswordError("");
+      toast({ title: "Password changed", description: "Your password has been updated." });
+    },
+    onError: async (err: any) => {
+      const msg = err.message?.includes("401") ? "Current password is incorrect." : "Failed to change password.";
+      setPasswordError(msg);
+    },
+  });
+
+  function handleChangePassword() {
+    setPasswordError("");
+    if (newPassword.length < 8) { setPasswordError("New password must be at least 8 characters."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("Passwords do not match."); return; }
+    changePasswordMutation.mutate({ currentPassword, newPassword });
+  }
+
   const [copied, setCopied] = useState(false);
   const bookingUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}#/book`
@@ -563,6 +605,63 @@ export default function SettingsPage() {
             />
             <p className="text-xs text-muted-foreground">Sent ~7–10 days after the appointment to encourage rebooking.</p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 5: Change Password */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-primary" />
+            <CardTitle style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} className="text-xl">
+              Change Password
+            </CardTitle>
+          </div>
+          <CardDescription>Update your admin login password.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              data-testid="input-currentPassword"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="newPassword">New Password</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              data-testid="input-newPassword"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              data-testid="input-confirmPassword"
+            />
+          </div>
+          {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
+          <Button
+            onClick={handleChangePassword}
+            disabled={changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}
+            variant="outline"
+            data-testid="button-change-password"
+          >
+            {changePasswordMutation.isPending ? "Updating…" : "Update Password"}
+          </Button>
         </CardContent>
       </Card>
 
