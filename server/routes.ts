@@ -613,10 +613,10 @@ export async function registerRoutes(server: Server, app: Express) {
     storage.createIntakeQuestion({ question: "What's your biggest concern about getting a spray tan?", type: "select", options: JSON.stringify(["Looking orange or unnatural", "Dryness or skin feeling dull", "Fading unevenly or too quickly"]), required: false, sortOrder: 6, isActive: true });
     storage.createIntakeQuestion({ question: "Enter your email to get your results and the best spray / self tan tips!", type: "text", options: null, required: false, sortOrder: 7, isActive: true });
 
-    // Waiver Template
+    // Waiver Template — matches Izzy's real cancellation policy & terms
     storage.createWaiverTemplate({
-      title: "Spray Tan Consent & Liability Waiver",
-      content: `I understand that a spray tan involves the application of a cosmetic product (DHA-based solution) to my skin.\n\n**Risks & Acknowledgments:**\n- I confirm I am not allergic to any ingredients listed by the technician.\n- I understand results vary based on skin type, prep, and aftercare.\n- I acknowledge that spray tans are cosmetic and do NOT provide UV protection.\n- I will follow all aftercare instructions provided.\n\n**Liability Release:**\nI release this business, its owners, and staff from any liability related to adverse reactions, unsatisfactory results, or damage to personal property during my session.\n\nBy signing below, I confirm I have read and agree to these terms.`,
+      title: "BRONZ Bliss Terms & Conditions",
+      content: `🤎 CANCELLATION POLICY\n\nAppointments cancelled/rescheduled within 24 hours of the scheduled time will result in a 50% fee of total service booked.\n\n🤎 TERMS AND CONDITIONS\n\nDISCLAIMER: Understand that BRONZ Bliss's spray tan solution does not contain sunscreen and will not protect your skin from sunburn. By using BRONZ Bliss services, you release BRONZ Bliss from all liability related to these services. You assume all associated risks.\n\nINFORMED CONSENT: I voluntarily choose to undergo a spray tan service with BRONZ Bliss. I understand the procedures, potential risks, and expected outcomes. Risks include allergic reactions, skin sensitivity, uneven tan, and temporary fabric staining. Results may vary.\n\nIMPORTANT PRECAUTIONS: Understand that changes in medications, pregnancy, and "that time of the month" can cause your tan to not develop as dark or last as long. Ingredients are generally safe but can cause allergies. Inform your technician of any allergies, medical history, or prior adverse reactions if needed. Understand the importance of following the recommended tan care instructions previously sent upon booking.\n\nI release BRONZ Bliss from any claims arising from the spray tanning procedures, except those resulting from negligence or intentional misconduct.\n\nBy signing below, I acknowledge that I have read, understood, and agreed to the above terms and conditions.`,
       isActive: true,
     });
 
@@ -631,9 +631,9 @@ export async function registerRoutes(server: Server, app: Express) {
     // Business Settings
     storage.updateBusinessSettings({
       businessName: "BRONZ Bliss",
-      phone: "435-555-0200",
-      email: "hello@bronzbliss.com",
-      address: "Cedar City, UT",
+      phone: "",
+      email: "",
+      address: "668 E Fiddlers Cove Dr Unit 60, Cedar City, UT 84721",
       timezone: "America/Denver",
       depositRequired: true,
       depositAmount: 10,
@@ -646,12 +646,12 @@ export async function registerRoutes(server: Server, app: Express) {
       aftercareTemplate: "Thanks for visiting, {name}! For best results: avoid water for 8 hrs, moisturize daily, and avoid exfoliants for 5 days.",
       rebookingTemplate: "Hi {name}! It's been 2 weeks since your last tan. Ready to glow again? Book your next session: {link}",
       operatingHours: JSON.stringify({
-        mon: { open: "09:00", close: "18:00" },
-        tue: { open: "09:00", close: "18:00" },
-        wed: { open: "09:00", close: "18:00" },
-        thu: { open: "09:00", close: "20:00" },
-        fri: { open: "09:00", close: "20:00" },
-        sat: { open: "10:00", close: "16:00" },
+        mon: { open: "16:30", close: "20:00" },
+        tue: { open: "16:30", close: "20:00" },
+        wed: { open: "16:30", close: "20:00" },
+        thu: { open: "16:30", close: "20:00" },
+        fri: { open: "10:30", close: "13:00" },
+        sat: null,
         sun: null,
       }),
     });
