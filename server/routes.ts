@@ -604,13 +604,10 @@ export async function registerRoutes(server: Server, app: Express) {
     storage.createSessionRecord({ appointmentId: 5, clientId: c5.id, formula: "SunFX Medium", shade: "medium", rinseTime: 8, aftercareNotes: "Avoid water for 8 hours. Moisturize after first rinse.", sessionNotes: "Even application, client happy with shade.", createdAt: yesterday });
     storage.createSessionRecord({ appointmentId: 6, clientId: c1.id, formula: null, shade: null, rinseTime: null, aftercareNotes: null, sessionNotes: "Standard bed session, 15 min.", createdAt: twoDaysAgo });
 
-    // Intake Questions — matches Izzy's real Bronz Tan Quiz
+    // Intake Questions — Bronz Tan Quiz
     storage.createIntakeQuestion({ question: "How familiar are you with professional spray tanning?", type: "select", options: JSON.stringify(["I'm completely new to spray tanning", "I've had a few spray tans before with mixed results", "I'm experienced and know exactly what I want"]), required: true, sortOrder: 1, isActive: true });
-    storage.createIntakeQuestion({ question: "What's your biggest concern about getting a spray tan?", type: "select", options: JSON.stringify(["Looking orange or unnatural", "Dryness or skin feeling dull", "Fading unevenly or too quickly"]), required: true, sortOrder: 2, isActive: true });
-    storage.createIntakeQuestion({ question: "What kind of glow are you going for?", type: "select", options: JSON.stringify(["Subtle / natural \u2728 \u2013 Just a glow that enhances my skin tone", "Medium bronze \ud83e\udd0e \u2013 Noticeable, sunkissed, but still natural", "Ultra dark \ud83d\udda4 \u2013 I love a dramatic, rich, bronzed look"]), required: true, sortOrder: 3, isActive: true });
-    storage.createIntakeQuestion({ question: "Do you want added definition or contouring?", type: "select", options: JSON.stringify(["Yes \u2014 full sculpting \ud83d\udd25 (snatched, defined look)", "Maybe \u2014 just a little \u2728 (targeted areas like arms, stomach, or face)", "Not for me"]), required: true, sortOrder: 4, isActive: true });
-    storage.createIntakeQuestion({ question: "Want your glow to last as long as possible?", type: "select", options: JSON.stringify(["Yes \u2014 I want it to last as long as possible \u2728", "I'm open to recommendations", "Not a priority"]), required: true, sortOrder: 5, isActive: true });
-    storage.createIntakeQuestion({ question: "Do you have any skin conditions, allergies, or sensitivities we should know about?", type: "textarea", options: null, required: false, sortOrder: 6, isActive: true });
+    storage.createIntakeQuestion({ question: "What's your main reason for wanting a spray tan?", type: "select", options: JSON.stringify(["I am getting married!", "Vacation!", "I want to feel like my most confident self", "I'm ready to make spray tanning part of my regular routine"]), required: true, sortOrder: 2, isActive: true });
+    storage.createIntakeQuestion({ question: "What's your biggest concern about getting a spray tan?", type: "select", options: JSON.stringify(["Looking orange or unnatural", "Dryness or skin feeling dull", "Fading unevenly or too quickly"]), required: false, sortOrder: 3, isActive: true });
 
     // Waiver Template
     storage.createWaiverTemplate({
