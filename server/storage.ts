@@ -20,7 +20,7 @@ import {
   waitlist, type InsertWaitlist, type Waitlist,
 } from "@shared/schema";
 
-const sqlite = new Database("glowcrm.db");
+const sqlite = new Database("bronzbliss.db");
 sqlite.pragma("journal_mode = WAL");
 export const db = drizzle(sqlite);
 
