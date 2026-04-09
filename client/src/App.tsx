@@ -58,7 +58,7 @@ function AppShell() {
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between gap-1 px-4 py-2 border-b shrink-0">
+          <header className="flex items-center justify-between gap-1 px-4 py-2.5 border-b border-border/50 shrink-0">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <ThemeToggle />
           </header>
