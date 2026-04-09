@@ -611,6 +611,7 @@ export async function registerRoutes(server: Server, app: Express) {
     storage.createIntakeQuestion({ question: "Do you want added definition or contouring?", type: "select", options: JSON.stringify(["Yes \u2014 full sculpting \ud83d\udd25 (I want that snatched, defined look)", "Maybe \u2014 just a little \u2728 (targeted areas like arms, stomach, or face)", "Not for me"]), required: true, sortOrder: 4, isActive: true });
     storage.createIntakeQuestion({ question: "Want your glow to last as long as possible?", type: "select", options: JSON.stringify(["Yes \u2014 I want it to last as long as possible \u2728", "I'm open to recommendations", "Not a priority"]), required: true, sortOrder: 5, isActive: true });
     storage.createIntakeQuestion({ question: "What's your biggest concern about getting a spray tan?", type: "select", options: JSON.stringify(["Looking orange or unnatural", "Dryness or skin feeling dull", "Fading unevenly or too quickly"]), required: false, sortOrder: 6, isActive: true });
+    storage.createIntakeQuestion({ question: "Enter your email to get your results and the best spray / self tan tips!", type: "text", options: null, required: false, sortOrder: 7, isActive: true });
 
     // Waiver Template
     storage.createWaiverTemplate({
