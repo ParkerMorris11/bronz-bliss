@@ -854,6 +854,75 @@ function LocationSection() {
   );
 }
 
+// ── Instagram Section ───────────────────────────────────
+
+const instaCards = [
+  { gradient: "from-amber-400 to-orange-500", emoji: "✨", text: "Custom Tan Day", sub: "Every tan is tailored to YOUR skin tone" },
+  { gradient: "from-orange-400 to-red-400", emoji: "🔥", text: "The Icon Tan", sub: "Our darkest, most dramatic bronze" },
+  { gradient: "from-amber-300 to-yellow-500", emoji: "🤎", text: "Contour Magic", sub: "Sculpted. Defined. Airbrushed." },
+  { gradient: "from-orange-500 to-amber-600", emoji: "💧", text: "Hydration Glow", sub: "30-40% longer lasting results" },
+  { gradient: "from-yellow-400 to-amber-500", emoji: "👰", text: "Bridal Bronze", sub: "Your perfect wedding day glow" },
+  { gradient: "from-amber-500 to-orange-600", emoji: "⭐", text: "5-Star Rated", sub: "Cedar City's favorite spray tan" },
+  { gradient: "from-orange-300 to-amber-400", emoji: "🌟", text: "New Clients", sub: "Take the quiz & find your shade" },
+  { gradient: "from-amber-600 to-orange-700", emoji: "💛", text: "Glow Season", sub: "Book your spring tan today" },
+];
+
+function InstagramSection() {
+  return (
+    <section className="py-20 px-6 overflow-hidden" id="instagram">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-10">
+          <a
+            href="https://www.instagram.com/bronz.bliss"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-amber-700 hover:text-amber-900 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            <span className="text-lg font-bold" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>@bronz.bliss</span>
+          </a>
+          <p className="text-sm text-amber-800/60 mt-1">Follow along for tan tips, client transformations & studio vibes</p>
+        </div>
+
+        {/* Horizontal scroll carousel */}
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {instaCards.map((card, i) => (
+            <a
+              key={i}
+              href="https://www.instagram.com/bronz.bliss"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-none snap-center group"
+            >
+              <div className={`w-52 h-52 rounded-2xl bg-gradient-to-br ${card.gradient} p-5 flex flex-col justify-between relative overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]`}>
+                {/* Decorative circle */}
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10 blur-md" />
+                <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full bg-white/10 blur-md" />
+                <span className="text-3xl relative z-10">{card.emoji}</span>
+                <div className="relative z-10">
+                  <p className="text-white font-bold text-sm leading-tight">{card.text}</p>
+                  <p className="text-white/70 text-xs mt-0.5">{card.sub}</p>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div className="text-center mt-6">
+          <a
+            href="https://www.instagram.com/bronz.bliss"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:scale-[1.03] active:scale-[0.97] transition-transform"
+          >
+            Follow @bronz.bliss on Instagram
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FooterCTA() {
   return (
     <section
@@ -1067,6 +1136,7 @@ export default function LandingPage() {
         <ReviewsSection />
         <HowItWorksSection />
         <LocationSection />
+        <InstagramSection />
         <FooterCTA />
       </main>
 
