@@ -23,8 +23,9 @@ import SettingsPage from "@/pages/settings";
 import BookingPage from "@/pages/booking";
 import GiftCardsPage from "@/pages/gift-cards";
 import WaitlistPage from "@/pages/waitlist-page";
+import LoginPage from "@/pages/login";
 import NotFound from "@/pages/not-found";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 
 function ThemeToggle() {
@@ -41,13 +42,19 @@ function SeedOnMount() {
   return null;
 }
 
-// Detect if we're on the public booking route
 function AppShell() {
   const [location] = useHashLocation();
-  const isBooking = location === "/book" || location.startsWith("/book/");
+  const [authed, setAuthed] = useState(false);
 
+  // Public routes — no login required
+  const isBooking = location === "/book" || location.startsWith("/book/");
   if (isBooking) {
     return <BookingPage />;
+  }
+
+  // Login gate for admin
+  if (!authed) {
+    return <LoginPage onLogin={() => setAuthed(true)} />;
   }
 
   const sidebarStyle = {

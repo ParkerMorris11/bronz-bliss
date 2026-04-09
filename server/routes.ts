@@ -3,6 +3,17 @@ import type { Server } from "http";
 import { storage } from "./storage";
 
 export async function registerRoutes(server: Server, app: Express) {
+  // ── Auth ──────────────────────────────────────────────
+  app.post("/api/auth/login", (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD || "bronzbliss";
+    if (password === adminPassword) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, error: "Wrong password" });
+    }
+  });
+
   // ── Dashboard ─────────────────────────────────────────
   app.get("/api/dashboard", (_req, res) => {
     const stats = storage.getDashboardStats();
