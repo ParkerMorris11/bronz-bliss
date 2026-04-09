@@ -218,6 +218,37 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Landing Page Link */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Link className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Your Landing Page</p>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                Your marketing page with services, reviews, hours, and booking. Perfect for Instagram bio.
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="text-xs bg-background rounded px-2 py-1 border flex-1 truncate">
+                  {bookingUrl.replace('#/book', '#/landing')}
+                </code>
+                <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs" onClick={() => {
+                  navigator.clipboard.writeText(bookingUrl.replace('#/book', '#/landing'));
+                  toast({ title: "Landing page link copied" });
+                }} data-testid="button-copy-landing-link">
+                  <Copy className="w-3 h-3 mr-1" /> Copy
+                </Button>
+                <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs" onClick={() => window.open(`/#/landing`, "_blank")} data-testid="button-preview-landing">
+                  Preview
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Section 1: Business Info */}
       <Card>
         <CardHeader>

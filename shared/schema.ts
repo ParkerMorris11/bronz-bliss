@@ -30,6 +30,7 @@ export const clients = sqliteTable("clients", {
   intakeCompleted: integer("intake_completed", { mode: "boolean" }).notNull().default(false),
   waiverSigned: integer("waiver_signed", { mode: "boolean" }).notNull().default(false),
   waiverSignedAt: text("waiver_signed_at"),
+  birthday: text("birthday"),
   createdAt: text("created_at").notNull(),
 });
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
@@ -253,3 +254,32 @@ export const waitlist = sqliteTable("waitlist", {
 export const insertWaitlistSchema = createInsertSchema(waitlist).omit({ id: true });
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type Waitlist = typeof waitlist.$inferSelect;
+
+// ── Promo Codes ──────────────────────────────────────────
+export const promoCodes = sqliteTable("promo_codes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  code: text("code").notNull(),
+  discountType: text("discount_type").notNull().default("percent"), // percent, fixed
+  discountValue: real("discount_value").notNull(),
+  maxUses: integer("max_uses"),
+  usedCount: integer("used_count").notNull().default(0),
+  expiresAt: text("expires_at"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+});
+export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({ id: true });
+export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
+export type PromoCode = typeof promoCodes.$inferSelect;
+
+// ── Loyalty Points ───────────────────────────────────────
+export const loyaltyPoints = sqliteTable("loyalty_points", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  clientId: integer("client_id").notNull(),
+  points: integer("points").notNull(),
+  reason: text("reason").notNull(), // earned_visit, earned_referral, redeemed
+  appointmentId: integer("appointment_id"),
+  createdAt: text("created_at").notNull(),
+});
+export const insertLoyaltyPointsSchema = createInsertSchema(loyaltyPoints).omit({ id: true });
+export type InsertLoyaltyPoints = z.infer<typeof insertLoyaltyPointsSchema>;
+export type LoyaltyPoints = typeof loyaltyPoints.$inferSelect;

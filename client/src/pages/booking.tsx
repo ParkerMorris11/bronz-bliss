@@ -122,10 +122,10 @@ export default function BookingPage() {
   // ── Booking disabled check ──
   if (settings && !settings.bookingEnabled) {
     return (
-      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
-          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-6 h-6 text-amber-600" />
           </div>
           <h1 className="text-lg font-bold" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             Online booking is paused
@@ -144,9 +144,9 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <div className="bg-white dark:bg-stone-900 border-b">
+      <div className="bg-white border-b">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
             <Sun className="w-4 h-4 text-white" />
@@ -172,14 +172,14 @@ export default function BookingPage() {
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
                     i < stepIndex ? "bg-primary text-white" :
                     i === stepIndex ? "bg-primary text-white" :
-                    "bg-stone-200 dark:bg-stone-700 text-muted-foreground"
+                    "bg-stone-200 text-muted-foreground"
                   }`}>
                     {i < stepIndex ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
                   </div>
                   <span className={`text-xs ${i === stepIndex ? "font-medium" : "text-muted-foreground"}`}>
                     {stepLabels[i]}
                   </span>
-                  {i < steps.length - 1 && <div className="flex-1 h-px bg-stone-200 dark:bg-stone-700" />}
+                  {i < steps.length - 1 && <div className="flex-1 h-px bg-stone-200" />}
                 </div>
               ))}
             </div>
@@ -200,8 +200,8 @@ export default function BookingPage() {
                 <button
                   key={svc.id}
                   onClick={() => { setSelectedService(svc); setStep("datetime"); }}
-                  className={`w-full text-left rounded-xl border-2 bg-white dark:bg-stone-900 p-4 transition-all hover:border-primary/60 hover:shadow-sm ${
-                    selectedService?.id === svc.id ? "border-primary shadow-sm" : "border-stone-200 dark:border-stone-700"
+                  className={`w-full text-left rounded-xl border-2 bg-white p-4 transition-all hover:border-primary/60 hover:shadow-sm ${
+                    selectedService?.id === svc.id ? "border-primary shadow-sm" : "border-stone-200"
                   }`}
                   data-testid={`service-${svc.id}`}
                 >
@@ -242,7 +242,7 @@ export default function BookingPage() {
             </div>
 
             {/* Mini calendar */}
-            <div className="rounded-xl border bg-white dark:bg-stone-900 p-4">
+            <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between mb-3">
                 <button
                   onClick={() => setCalendarAnchor(d => { const r = new Date(d); r.setMonth(r.getMonth() - 1); return r; })}
@@ -294,7 +294,7 @@ export default function BookingPage() {
               {!availability ? (
                 <div className="grid grid-cols-4 gap-2">
                   {[1,2,3,4,5,6,7,8].map(i => (
-                    <div key={i} className="h-9 rounded-lg bg-stone-200 dark:bg-stone-800 animate-pulse" />
+                    <div key={i} className="h-9 rounded-lg bg-stone-200 animate-pulse" />
                   ))}
                 </div>
               ) : availability.closed ? (
@@ -316,7 +316,7 @@ export default function BookingPage() {
                       className={`py-2 rounded-lg text-xs font-medium border-2 transition-all ${
                         selectedTime === slot
                           ? "bg-primary text-white border-primary"
-                          : "bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-700 hover:border-primary/60 hover:text-primary"
+                          : "bg-white border-stone-200 hover:border-primary/60 hover:text-primary"
                       }`}
                       data-testid={`slot-${slot}`}
                     >
@@ -360,7 +360,7 @@ export default function BookingPage() {
                 <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${selectedService?.price}</span>
               </div>
               {settings?.depositRequired && settings.depositAmount && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                <p className="text-xs text-amber-600 mt-1">
                   ${settings.depositAmount} deposit required to confirm
                 </p>
               )}
@@ -446,8 +446,8 @@ export default function BookingPage() {
         {/* Step 4: Done */}
         {step === "done" && confirmation && (
           <div className="text-center py-8 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-emerald-600" />
             </div>
             <div>
               <h2 className="text-xl font-bold" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
@@ -457,7 +457,7 @@ export default function BookingPage() {
                 We'll see you soon. Check your phone for a confirmation.
               </p>
             </div>
-            <div className="rounded-xl bg-white dark:bg-stone-900 border p-4 text-left space-y-2 max-w-xs mx-auto">
+            <div className="rounded-xl bg-white border p-4 text-left space-y-2 max-w-xs mx-auto">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your Appointment</p>
               <p className="font-semibold text-sm">{confirmation.serviceName}</p>
               <p className="text-sm text-muted-foreground">

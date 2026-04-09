@@ -18,6 +18,8 @@ import {
   businessSettings, type InsertBusinessSettings, type BusinessSettings,
   giftCards, type InsertGiftCard, type GiftCard,
   waitlist, type InsertWaitlist, type Waitlist,
+  promoCodes, type InsertPromoCode, type PromoCode,
+  loyaltyPoints, type InsertLoyaltyPoints, type LoyaltyPoints,
 } from "@shared/schema";
 
 const sqlite = new Database("bronzbliss.db");
@@ -48,6 +50,7 @@ sqlite.exec(`
     intake_completed INTEGER NOT NULL DEFAULT 0,
     waiver_signed INTEGER NOT NULL DEFAULT 0,
     waiver_signed_at TEXT,
+    birthday TEXT,
     created_at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS appointments (
@@ -183,6 +186,25 @@ sqlite.exec(`
     expires_at TEXT,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS promo_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL,
+    discount_type TEXT NOT NULL DEFAULT 'percent',
+    discount_value REAL NOT NULL,
+    max_uses INTEGER,
+    used_count INTEGER NOT NULL DEFAULT 0,
+    expires_at TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS loyalty_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    points INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    appointment_id INTEGER,
+    created_at TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS waitlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     client_id INTEGER,
@@ -308,6 +330,23 @@ export interface IStorage {
 
   // Analytics v2
   getClientLifetimeValues(): { clientId: number; name: string; totalSpent: number; visits: number; firstVisit: string; lastVisit: string }[];
+
+  // Promo Codes
+  getPromoCodes(): PromoCode[];
+  getPromoCodeByCode(code: string): PromoCode | undefined;
+  createPromoCode(data: InsertPromoCode): PromoCode;
+  updatePromoCode(id: number, data: Partial<InsertPromoCode>): PromoCode | undefined;
+
+  // Loyalty Points
+  getLoyaltyPointsByClient(clientId: number): LoyaltyPoints[];
+  getClientPointsBalance(clientId: number): number;
+  createLoyaltyEntry(data: InsertLoyaltyPoints): LoyaltyPoints;
+
+  // Search
+  searchAll(query: string): { clients: Client[]; appointments: Appointment[] };
+
+  // Birthdays
+  getUpcomingBirthdays(days: number): Client[];
 }
 
 export class DatabaseStorage implements IStorage {
@@ -706,6 +745,61 @@ export class DatabaseStorage implements IStorage {
         lastVisit: dates[dates.length - 1] || c.createdAt,
       };
     }).sort((a, b) => b.totalSpent - a.totalSpent);
+  }
+
+  // ── Promo Codes ───────────────────────────────────────
+  getPromoCodes(): PromoCode[] {
+    return db.select().from(promoCodes).orderBy(desc(promoCodes.createdAt)).all();
+  }
+  getPromoCodeByCode(code: string): PromoCode | undefined {
+    return db.select().from(promoCodes).where(eq(promoCodes.code, code)).get();
+  }
+  createPromoCode(data: InsertPromoCode): PromoCode {
+    return db.insert(promoCodes).values(data).returning().get();
+  }
+  updatePromoCode(id: number, data: Partial<InsertPromoCode>): PromoCode | undefined {
+    return db.update(promoCodes).set(data).where(eq(promoCodes.id, id)).returning().get();
+  }
+
+  // ── Loyalty Points ────────────────────────────────────
+  getLoyaltyPointsByClient(clientId: number): LoyaltyPoints[] {
+    return db.select().from(loyaltyPoints)
+      .where(eq(loyaltyPoints.clientId, clientId))
+      .orderBy(desc(loyaltyPoints.createdAt)).all();
+  }
+  getClientPointsBalance(clientId: number): number {
+    const rows = db.select().from(loyaltyPoints).where(eq(loyaltyPoints.clientId, clientId)).all();
+    return rows.reduce((sum, r) => sum + r.points, 0);
+  }
+  createLoyaltyEntry(data: InsertLoyaltyPoints): LoyaltyPoints {
+    return db.insert(loyaltyPoints).values(data).returning().get();
+  }
+
+  // ── Search ───────────────────────────────────────────
+  searchAll(query: string) {
+    const q = `%${query.toLowerCase()}%`;
+    const matchedClients = db.select().from(clients)
+      .where(sql`lower(${clients.firstName} || ' ' || ${clients.lastName}) LIKE ${q} OR lower(${clients.phone}) LIKE ${q} OR lower(${clients.email}) LIKE ${q}`)
+      .all();
+    const clientIds = matchedClients.map(c => c.id);
+    const matchedAppts = clientIds.length > 0
+      ? db.select().from(appointments).all().filter(a => clientIds.includes(a.clientId))
+      : [];
+    return { clients: matchedClients, appointments: matchedAppts };
+  }
+
+  // ── Birthdays ────────────────────────────────────────
+  getUpcomingBirthdays(days: number): Client[] {
+    const allClients = db.select().from(clients).all();
+    const today = new Date();
+    return allClients.filter(c => {
+      if (!c.birthday) return false;
+      const [, m, d] = c.birthday.split("-").map(Number);
+      const bday = new Date(today.getFullYear(), m - 1, d);
+      if (bday < today) bday.setFullYear(bday.getFullYear() + 1);
+      const diff = (bday.getTime() - today.getTime()) / 86400000;
+      return diff >= 0 && diff <= days;
+    });
   }
 }
 

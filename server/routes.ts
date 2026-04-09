@@ -526,6 +526,88 @@ export async function registerRoutes(server: Server, app: Express) {
     res.json(storage.getClientLifetimeValues());
   });
 
+  // ── Promo Codes ───────────────────────────────────────
+  app.get("/api/promo-codes", (_req, res) => {
+    res.json(storage.getPromoCodes());
+  });
+  app.post("/api/promo-codes", (req, res) => {
+    const pc = storage.createPromoCode({ ...req.body, createdAt: new Date().toISOString().split("T")[0] });
+    res.status(201).json(pc);
+  });
+  app.patch("/api/promo-codes/:id", (req, res) => {
+    const pc = storage.updatePromoCode(Number(req.params.id), req.body);
+    if (!pc) return res.status(404).json({ error: "Promo code not found" });
+    res.json(pc);
+  });
+  app.get("/api/promo-codes/validate/:code", (req, res) => {
+    const pc = storage.getPromoCodeByCode(req.params.code.toUpperCase());
+    if (!pc || !pc.isActive) return res.status(404).json({ valid: false });
+    if (pc.maxUses && pc.usedCount >= pc.maxUses) return res.json({ valid: false, reason: "Code has been fully redeemed" });
+    if (pc.expiresAt && pc.expiresAt < new Date().toISOString().split("T")[0]) return res.json({ valid: false, reason: "Code has expired" });
+    res.json({ valid: true, discountType: pc.discountType, discountValue: pc.discountValue });
+  });
+
+  // ── Loyalty Points ────────────────────────────────────
+  app.get("/api/loyalty/:clientId", (req, res) => {
+    const history = storage.getLoyaltyPointsByClient(Number(req.params.clientId));
+    const balance = storage.getClientPointsBalance(Number(req.params.clientId));
+    res.json({ balance, history });
+  });
+  app.post("/api/loyalty", (req, res) => {
+    const entry = storage.createLoyaltyEntry({ ...req.body, createdAt: new Date().toISOString().split("T")[0] });
+    res.status(201).json(entry);
+  });
+
+  // ── Search ──────────────────────────────────────────
+  app.get("/api/search", (req, res) => {
+    const q = (req.query.q as string) || "";
+    if (!q) return res.json({ clients: [], appointments: [] });
+    res.json(storage.searchAll(q));
+  });
+
+  // ── Birthdays ───────────────────────────────────────
+  app.get("/api/birthdays", (req, res) => {
+    const days = Number(req.query.days) || 30;
+    res.json(storage.getUpcomingBirthdays(days));
+  });
+
+  // ── Export CSV ───────────────────────────────────────
+  app.get("/api/export/clients", (_req, res) => {
+    const allClients = storage.getClients();
+    const csv = ["Name,Email,Phone,Skin Type,Birthday,Created"];
+    allClients.forEach(c => csv.push(`"${c.firstName} ${c.lastName}","${c.email || ""}","${c.phone || ""}","${c.skinType || ""}","${c.birthday || ""}","${c.createdAt}"`));
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=bronzbliss-clients.csv");
+    res.send(csv.join("\n"));
+  });
+  app.get("/api/export/appointments", (req, res) => {
+    const start = (req.query.start as string) || "2020-01-01";
+    const end = (req.query.end as string) || "2030-12-31";
+    const appts = storage.getAppointmentsByRange(start, end);
+    const csv = ["Date,Time,Client,Service,Status,Source"];
+    appts.forEach(a => {
+      const client = storage.getClient(a.clientId);
+      const svc = storage.getService(a.serviceId);
+      csv.push(`"${a.date}","${a.time}","${client ? client.firstName + ' ' + client.lastName : ''}","${svc?.name || ''}","${a.status}","${a.source}"`);
+    });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=bronzbliss-appointments.csv");
+    res.send(csv.join("\n"));
+  });
+  app.get("/api/export/revenue", (req, res) => {
+    const start = (req.query.start as string) || "2020-01-01";
+    const end = (req.query.end as string) || "2030-12-31";
+    const payments = storage.getPayments().filter(p => p.createdAt >= start && p.createdAt <= end);
+    const csv = ["Date,Amount,Type,Method,Client"];
+    payments.forEach(p => {
+      const client = storage.getClient(p.clientId);
+      csv.push(`"${p.createdAt}","${p.amount}","${p.type}","${p.method}","${client ? client.firstName + ' ' + client.lastName : ''}"`);
+    });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=bronzbliss-revenue.csv");
+    res.send(csv.join("\n"));
+  });
+
   // ── SMS Automation ────────────────────────────────────
   // Trigger all automated messages for an appointment
   app.post("/api/automation/trigger/:appointmentId", (req, res) => {
