@@ -1,5 +1,4 @@
 import { LayoutDashboard, CalendarDays, Users, Sparkles, Package, Settings, ClipboardCheck, BarChart3, Boxes, Gift, ListChecks } from "lucide-react";
-import { Link } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import {
   Sidebar,
@@ -37,7 +36,7 @@ function isActive(location: string, url: string) {
 }
 
 export function AppSidebar() {
-  const [location] = useHashLocation();
+  const [location, navigate] = useHashLocation();
 
   return (
     <Sidebar>
@@ -54,14 +53,13 @@ export function AppSidebar() {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    asChild
                     data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                    onClick={() => navigate(item.url)}
+                    className="cursor-pointer"
                   >
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -75,14 +73,13 @@ export function AppSidebar() {
               {manageItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    asChild
                     data-active={isActive(location, item.url)}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                    onClick={() => navigate(item.url)}
+                    className="cursor-pointer"
                   >
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
