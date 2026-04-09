@@ -23,6 +23,7 @@ import SettingsPage from "@/pages/settings";
 import BookingPage from "@/pages/booking";
 import OnboardingPage from "@/pages/onboarding";
 import LandingPage from "@/pages/landing";
+import MessagesPage from "@/pages/messages";
 import GiftCardsPage from "@/pages/gift-cards";
 import WaitlistPage from "@/pages/waitlist-page";
 import LoginPage from "@/pages/login";
@@ -88,6 +89,7 @@ function AppShell() {
               <Route path="/reports" component={ReportsPage} />
               <Route path="/inventory" component={InventoryPage} />
               <Route path="/settings" component={SettingsPage} />
+              <Route path="/messages" component={MessagesPage} />
               <Route path="/gift-cards" component={GiftCardsPage} />
               <Route path="/waitlist" component={WaitlistPage} />
               <Route component={NotFound} />

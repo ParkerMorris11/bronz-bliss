@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays, Users, Sparkles, Package, Settings, ClipboardCheck, BarChart3, Boxes, Gift, ListChecks } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, Sparkles, Package, Settings, ClipboardCheck, BarChart3, Boxes, Gift, ListChecks, MessageSquare } from "lucide-react";
 import { useHashLocation } from "wouter/use-hash-location";
 import {
   Sidebar,
@@ -23,6 +23,7 @@ const mainItems = [
 ];
 
 const manageItems = [
+  { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Intake & Waivers", url: "/intake", icon: ClipboardCheck },
   { title: "Inventory", url: "/inventory", icon: Boxes },
   { title: "Gift Cards", url: "/gift-cards", icon: Gift },
