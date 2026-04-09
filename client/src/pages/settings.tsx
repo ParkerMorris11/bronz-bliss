@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Building2, Clock, Bell, Calendar } from "lucide-react";
+import { Save, Building2, Clock, Bell, Calendar, Link, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { BusinessSettings } from "@shared/schema";
 
@@ -156,6 +156,17 @@ export default function SettingsPage() {
     }));
   }
 
+  // Booking link — must be before any conditional returns
+  const [copied, setCopied] = useState(false);
+  const bookingUrl = typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}#/book`
+    : "";
+  const copyLink = () => {
+    navigator.clipboard.writeText(bookingUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -178,6 +189,35 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      {/* Booking Link Banner */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Link className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Your Booking Link</p>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                Share this with clients so they can book directly without calling.
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="text-xs bg-background rounded px-2 py-1 border flex-1 truncate">
+                  {bookingUrl}
+                </code>
+                <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs" onClick={copyLink} data-testid="button-copy-booking-link">
+                  {copied ? <Check className="w-3 h-3 mr-1 text-emerald-500" /> : <Copy className="w-3 h-3 mr-1" />}
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+                <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs" onClick={() => window.open(`/#/book`, "_blank")} data-testid="button-preview-booking">
+                  Preview
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Section 1: Business Info */}
       <Card>
         <CardHeader>

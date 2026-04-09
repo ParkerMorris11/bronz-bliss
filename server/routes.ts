@@ -302,6 +302,145 @@ export async function registerRoutes(server: Server, app: Express) {
     res.json(storage.getPopularServices(start, end));
   });
 
+  // ── Public Booking API ─────────────────────────────────
+
+  // GET /api/public/settings — business info for the booking page
+  app.get("/api/public/settings", (_req, res) => {
+    const s = storage.getBusinessSettings();
+    res.json({
+      businessName: s.businessName,
+      phone: s.phone,
+      address: s.address,
+      bookingEnabled: s.bookingEnabled,
+      depositRequired: s.depositRequired,
+      depositAmount: s.depositAmount,
+      cancellationHours: s.cancellationHours,
+      operatingHours: s.operatingHours,
+      bookingNotice: s.bookingNotice,
+    });
+  });
+
+  // GET /api/public/services
+  app.get("/api/public/services", (_req, res) => {
+    res.json(storage.getServices().filter(s => s.isActive));
+  });
+
+  // GET /api/public/availability?date=YYYY-MM-DD&serviceId=N
+  app.get("/api/public/availability", (req, res) => {
+    const date = req.query.date as string;
+    const serviceId = Number(req.query.serviceId);
+    if (!date || !serviceId) return res.status(400).json({ error: "date and serviceId required" });
+
+    const settings = storage.getBusinessSettings();
+    const service = storage.getService(serviceId);
+    if (!service) return res.status(404).json({ error: "Service not found" });
+
+    if (!settings.bookingEnabled) return res.json({ slots: [], closed: true });
+
+    // Determine operating hours for this day
+    const dayOfWeek = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
+    const DAY_KEYS: Record<string, string> = {
+      Monday: "mon", Tuesday: "tue", Wednesday: "wed", Thursday: "thu",
+      Friday: "fri", Saturday: "sat", Sunday: "sun",
+    };
+    let openMin = 9 * 60, closeMin = 18 * 60, isOpen = true;
+    if (settings.operatingHours) {
+      try {
+        const hours = JSON.parse(settings.operatingHours);
+        const dayHours = hours[DAY_KEYS[dayOfWeek]];
+        if (!dayHours) { isOpen = false; }
+        else {
+          const [oh, om] = (dayHours.open || "09:00").split(":").map(Number);
+          const [ch, cm] = (dayHours.close || "18:00").split(":").map(Number);
+          openMin = oh * 60 + om; closeMin = ch * 60 + cm;
+        }
+      } catch {}
+    }
+    if (!isOpen) return res.json({ slots: [], closed: true });
+
+    // Booking notice window
+    const notice = settings.bookingNotice ?? 60;
+    const today = new Date().toISOString().split("T")[0];
+    const nowMin = date === today ? (new Date().getHours() * 60 + new Date().getMinutes() + notice) : 0;
+
+    // Existing appointment blocks
+    const existing = storage.getAppointmentsByDate(date).filter(
+      a => a.status !== "cancelled" && a.status !== "no_show"
+    );
+    const blocks = existing.map(a => {
+      const svc = storage.getService(a.serviceId);
+      const [h, m] = a.time.split(":").map(Number);
+      const start = h * 60 + m;
+      return { start, end: start + (svc?.duration ?? 30) };
+    });
+
+    // Generate 30-min slots
+    const duration = service.duration;
+    const slots: string[] = [];
+    for (let t = openMin; t + duration <= closeMin; t += 30) {
+      if (t < nowMin) continue;
+      if (!blocks.some(b => t < b.end && t + duration > b.start)) {
+        const h = Math.floor(t / 60).toString().padStart(2, "0");
+        const m = (t % 60).toString().padStart(2, "0");
+        slots.push(`${h}:${m}`);
+      }
+    }
+    res.json({ slots, closed: false });
+  });
+
+  // POST /api/public/book
+  app.post("/api/public/book", (req, res) => {
+    const { firstName, lastName, phone, email, notes, serviceId, date, time } = req.body;
+    if (!firstName || !lastName || !serviceId || !date || !time) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const settings = storage.getBusinessSettings();
+    if (!settings.bookingEnabled) return res.status(403).json({ error: "Booking is disabled" });
+
+    // Find or create client
+    const allClients = storage.getClients();
+    let client = allClients.find(c =>
+      (phone && c.phone === phone) || (email && c.email === email)
+    );
+    if (!client) {
+      client = storage.createClient({
+        firstName, lastName,
+        phone: phone || null, email: email || null,
+        skinType: null, allergies: null, notes: null, preferredFormula: null,
+        createdAt: new Date().toISOString().split("T")[0],
+      });
+    }
+
+    const appointment = storage.createAppointment({
+      clientId: client.id,
+      serviceId: Number(serviceId),
+      date, time, status: "scheduled", depositPaid: false,
+      depositAmount: settings.depositRequired ? (settings.depositAmount ?? null) : null,
+      source: "booking_link",
+      notes: notes || null,
+      createdAt: new Date().toISOString().split("T")[0],
+    });
+
+    // Log confirmation message
+    if (client.phone) {
+      const svc = storage.getService(Number(serviceId));
+      const body = (settings.confirmationTemplate || "Hi {name}! Your {service} is confirmed for {date} at {time}.")
+        .replace("{name}", firstName).replace("{service}", svc?.name ?? "appointment")
+        .replace("{date}", date).replace("{time}", time);
+      storage.createMessageLog({
+        clientId: client.id, appointmentId: appointment.id, type: "booking_confirm",
+        channel: "sms", to: client.phone, body, status: "sent",
+        sentAt: new Date().toISOString(),
+      });
+    }
+
+    res.status(201).json({
+      appointment, client,
+      depositRequired: settings.depositRequired,
+      depositAmount: settings.depositAmount,
+    });
+  });
+
   // ── Seed demo data ────────────────────────────────────
   app.post("/api/seed", (_req, res) => {
     const existingServices = storage.getServices();
