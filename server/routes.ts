@@ -128,7 +128,7 @@ function getAvailabilityForService(date: string, serviceId: number) {
   });
 
   const slots: string[] = [];
-  for (let minute = openMin; minute + service.duration <= closeMin; minute += 30) {
+  for (let minute = openMin; minute + service.duration <= closeMin; minute += 15) {
     if (minute < nowMin) continue;
     if (!blocks.some((block) => minute < block.end && minute + service.duration > block.start)) {
       const hour = Math.floor(minute / 60).toString().padStart(2, "0");
