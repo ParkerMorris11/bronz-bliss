@@ -63,6 +63,9 @@ export default function ClientsPage() {
       setOpen(false);
       toast({ title: "Client added" });
     },
+    onError: (err: Error) => {
+      toast({ title: "Failed to add client", description: err.message, variant: "destructive" });
+    },
   });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
