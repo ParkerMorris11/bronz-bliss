@@ -60,7 +60,7 @@ This is a single-repo full-stack app where the Express server serves both the AP
 - After completing each logical unit of work, stage and commit.
 - Use conventional commits: `feat:`, `fix:`, `refactor:`, `chore:`, `security:`
 - Write a short commit body with bullet points of what changed and why.
-- Never push unless explicitly asked.
+- After each commit, push to `origin/main`.
 
 ## Code Style
 
