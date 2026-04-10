@@ -3,7 +3,9 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import session from "express-session";
-import MemoryStore from "memorystore";
+import BetterSqlite3 from "better-sqlite3";
+// @ts-expect-error no type declarations for this package
+import SqliteStoreFactory from "better-sqlite3-session-store";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
@@ -15,7 +17,10 @@ if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PASSWORD) {
   throw new Error("ADMIN_PASSWORD must be set in production");
 }
 
-const SessionStore = MemoryStore(session);
+const dbPath = process.env.DB_PATH ?? "./bronzbliss.db";
+const sessionDbPath = dbPath.replace(/\.db$/, "-sessions.db");
+const sessionDb = new BetterSqlite3(sessionDbPath);
+const SqliteStore = SqliteStoreFactory(session);
 
 const app = express();
 const httpServer = createServer(app);
@@ -37,7 +42,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "bronzbliss-dev-secret",
   resave: false,
   saveUninitialized: false,
-  store: new SessionStore({ checkPeriod: 86400000 }), // prune expired entries every 24h
+  store: new SqliteStore({
+    client: sessionDb,
+    expired: { clear: true, intervalMs: 900000 }, // prune expired every 15min
+  }),
   cookie: {
     secure: process.env.NODE_ENV === "production" && !!process.env.RAILWAY_ENVIRONMENT,
     httpOnly: true,
