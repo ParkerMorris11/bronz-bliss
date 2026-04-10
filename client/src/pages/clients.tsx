@@ -176,58 +176,59 @@ export default function ClientsPage() {
                 <Plus className="w-4 h-4 mr-1" /> New Client
               </Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>New Client</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>First Name</Label>
-                  <Input name="firstName" required data-testid="input-first-name" />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Client</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>First Name</Label>
+                    <Input name="firstName" required data-testid="input-first-name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name</Label>
+                    <Input name="lastName" required data-testid="input-last-name" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input name="email" type="email" data-testid="input-email" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input name="phone" data-testid="input-phone" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Last Name</Label>
-                  <Input name="lastName" required data-testid="input-last-name" />
+                  <Label>Skin Type</Label>
+                  <Select name="skinType">
+                    <SelectTrigger data-testid="select-skin-type">
+                      <SelectValue placeholder="Select skin type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {skinTypes.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input name="email" type="email" data-testid="input-email" />
+                  <Label>Allergies / Sensitivities</Label>
+                  <Input name="allergies" data-testid="input-allergies" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input name="phone" data-testid="input-phone" />
+                  <Label>Notes</Label>
+                  <Textarea name="notes" data-testid="input-client-notes" />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Skin Type</Label>
-                <Select name="skinType">
-                  <SelectTrigger data-testid="select-skin-type">
-                    <SelectValue placeholder="Select skin type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {skinTypes.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Allergies / Sensitivities</Label>
-                <Input name="allergies" data-testid="input-allergies" />
-              </div>
-              <div className="space-y-2">
-                <Label>Notes</Label>
-                <Textarea name="notes" data-testid="input-client-notes" />
-              </div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-client">
-                {createMutation.isPending ? "Adding..." : "Add Client"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-client">
+                  {createMutation.isPending ? "Adding..." : "Add Client"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="relative">
