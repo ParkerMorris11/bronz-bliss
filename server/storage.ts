@@ -162,6 +162,7 @@ sqlite.exec(`
     phone TEXT,
     email TEXT,
     address TEXT,
+    admin_password_hash TEXT,
     timezone TEXT NOT NULL DEFAULT 'America/Denver',
     deposit_required INTEGER NOT NULL DEFAULT 0,
     deposit_amount REAL,
@@ -224,6 +225,7 @@ sqlite.exec(`
 
 // Migrations for existing databases
 try { sqlite.exec(`ALTER TABLE business_settings ADD COLUMN accepted_payment_methods TEXT`); } catch {}
+try { sqlite.exec(`ALTER TABLE business_settings ADD COLUMN admin_password_hash TEXT`); } catch {}
 
 
 export interface IStorage {
@@ -302,6 +304,10 @@ export interface IStorage {
   // Inventory Usage
   getInventoryUsage(itemId: number): InventoryUsage[];
   createInventoryUsage(data: InsertInventoryUsage): InventoryUsage;
+
+  // Atomic booking — re-checks slot availability inside a transaction before inserting.
+  // Returns the new Appointment or "conflict" if the slot was taken.
+  bookAppointmentAtomically(data: InsertAppointment): Appointment | "conflict";
 
   // Business Settings
   getBusinessSettings(): BusinessSettings;
@@ -414,6 +420,31 @@ export class DatabaseStorage implements IStorage {
   }
   createAppointment(data: InsertAppointment): Appointment {
     return db.insert(appointments).values(data).returning().get();
+  }
+  bookAppointmentAtomically(data: InsertAppointment): Appointment | "conflict" {
+    return db.transaction((tx) => {
+      // Re-check slot availability inside the transaction
+      const existing = tx.select().from(appointments)
+        .where(eq(appointments.date, data.date)).all()
+        .filter((a) => a.status !== "cancelled" && a.status !== "no_show");
+
+      const svc = tx.select().from(services).where(eq(services.id, data.serviceId)).get();
+      if (!svc) return "conflict";
+
+      const [rh, rm] = data.time.split(":").map(Number);
+      const reqStart = rh * 60 + rm;
+      const reqEnd = reqStart + svc.duration;
+
+      for (const appt of existing) {
+        const bookedSvc = tx.select().from(services).where(eq(services.id, appt.serviceId)).get();
+        const [bh, bm] = appt.time.split(":").map(Number);
+        const bookedStart = bh * 60 + bm;
+        const bookedEnd = bookedStart + (bookedSvc?.duration ?? 30);
+        if (reqStart < bookedEnd && reqEnd > bookedStart) return "conflict";
+      }
+
+      return tx.insert(appointments).values(data).returning().get();
+    });
   }
   updateAppointment(id: number, data: Partial<InsertAppointment>): Appointment | undefined {
     return db.update(appointments).set(data).where(eq(appointments.id, id)).returning().get();

@@ -201,6 +201,7 @@ export const businessSettings = sqliteTable("business_settings", {
   phone: text("phone"),
   email: text("email"),
   address: text("address"),
+  adminPasswordHash: text("admin_password_hash"),
   timezone: text("timezone").notNull().default("America/Denver"),
   depositRequired: integer("deposit_required", { mode: "boolean" }).notNull().default(false),
   depositAmount: real("deposit_amount"),

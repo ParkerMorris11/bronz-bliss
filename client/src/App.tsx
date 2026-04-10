@@ -43,7 +43,11 @@ function ThemeToggle() {
 }
 
 function SeedOnMount() {
-  useEffect(() => { apiRequest("POST", "/api/seed").catch(() => {}); }, []);
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      apiRequest("POST", "/api/seed").catch(() => {});
+    }
+  }, []);
   return null;
 }
 

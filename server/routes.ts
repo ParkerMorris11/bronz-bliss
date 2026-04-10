@@ -25,9 +25,120 @@ import {
   insertPromoCodeSchema,
 } from "@shared/schema";
 
-// Hash the admin password on startup (async to avoid blocking)
-let ADMIN_HASH = "";
-bcrypt.hash(process.env.ADMIN_PASSWORD || "bronzbliss", 10).then(h => { ADMIN_HASH = h; });
+const LEGACY_DAY_KEYS: Record<string, string> = {
+  Monday: "mon",
+  Tuesday: "tue",
+  Wednesday: "wed",
+  Thursday: "thu",
+  Friday: "fri",
+  Saturday: "sat",
+  Sunday: "sun",
+};
+
+type AvailabilityError = {
+  status: 404;
+  body: { error: string };
+};
+
+type AvailabilitySuccess = {
+  status: 200;
+  body: { slots: string[]; closed: boolean };
+  settings: ReturnType<typeof storage.getBusinessSettings>;
+  service: NonNullable<ReturnType<typeof storage.getService>>;
+};
+
+async function ensureAdminHash() {
+  const settings = storage.getBusinessSettings();
+  if (settings.adminPasswordHash) return settings.adminPasswordHash;
+  const hash = await bcrypt.hash("bronzbliss", 10);
+  storage.updateBusinessSettings({ adminPasswordHash: hash });
+  return hash;
+}
+
+function getCurrentDateParts(timezone: string) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+  const parts = formatter.formatToParts(new Date());
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return {
+    today: `${get("year")}-${get("month")}-${get("day")}`,
+    minutes: Number(get("hour")) * 60 + Number(get("minute")),
+  };
+}
+
+function getOperatingWindow(operatingHours: string | null, date: string) {
+  const weekday = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long" });
+  let openMin = 9 * 60;
+  let closeMin = 18 * 60;
+  let isOpen = true;
+
+  if (operatingHours) {
+    try {
+      const hours = JSON.parse(operatingHours);
+      const dayHours = hours[weekday] ?? hours[LEGACY_DAY_KEYS[weekday]];
+      if (!dayHours) {
+        isOpen = false;
+      } else {
+        const [oh, om] = (dayHours.open || "09:00").split(":").map(Number);
+        const [ch, cm] = (dayHours.close || "18:00").split(":").map(Number);
+        openMin = oh * 60 + om;
+        closeMin = ch * 60 + cm;
+      }
+    } catch {}
+  }
+
+  return { isOpen, openMin, closeMin };
+}
+
+function getAvailabilityForService(date: string, serviceId: number) {
+  const settings = storage.getBusinessSettings();
+  const service = storage.getService(serviceId);
+  if (!service) {
+    return { status: 404, body: { error: "Service not found" } } satisfies AvailabilityError;
+  }
+
+  if (!settings.bookingEnabled) {
+    return { status: 200, body: { slots: [], closed: true }, settings, service } satisfies AvailabilitySuccess;
+  }
+
+  const { isOpen, openMin, closeMin } = getOperatingWindow(settings.operatingHours, date);
+  if (!isOpen) {
+    return { status: 200, body: { slots: [], closed: true }, settings, service } satisfies AvailabilitySuccess;
+  }
+
+  const timezone = settings.timezone || "America/Denver";
+  const now = getCurrentDateParts(timezone);
+  const notice = settings.bookingNotice ?? 60;
+  const nowMin = date === now.today ? now.minutes + notice : 0;
+  const existing = storage.getAppointmentsByDate(date).filter(
+    (appointment) => appointment.status !== "cancelled" && appointment.status !== "no_show"
+  );
+  const blocks = existing.map((appointment) => {
+    const bookedService = storage.getService(appointment.serviceId);
+    const [hour, minute] = appointment.time.split(":").map(Number);
+    const start = hour * 60 + minute;
+    return { start, end: start + (bookedService?.duration ?? 30) };
+  });
+
+  const slots: string[] = [];
+  for (let minute = openMin; minute + service.duration <= closeMin; minute += 30) {
+    if (minute < nowMin) continue;
+    if (!blocks.some((block) => minute < block.end && minute + service.duration > block.start)) {
+      const hour = Math.floor(minute / 60).toString().padStart(2, "0");
+      const minutePart = (minute % 60).toString().padStart(2, "0");
+      slots.push(`${hour}:${minutePart}`);
+    }
+  }
+
+  return { status: 200, body: { slots, closed: false }, settings, service } satisfies AvailabilitySuccess;
+}
 
 function validate(schema: { safeParse: (data: unknown) => { success: boolean; data?: any; error?: any } }) {
   return (req: any, res: any, next: any) => {
@@ -41,10 +152,18 @@ function validate(schema: { safeParse: (data: unknown) => { success: boolean; da
 }
 
 export async function registerRoutes(server: Server, app: Express) {
+  // If ADMIN_PASSWORD env var is set, always sync it to DB on startup so
+  // rotating the env credential takes effect on the next server restart.
+  if (process.env.ADMIN_PASSWORD) {
+    const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+    storage.updateBusinessSettings({ adminPasswordHash: hash });
+  }
+
   // ── Auth ──────────────────────────────────────────────
   app.post("/api/auth/login", async (req, res) => {
     const { password } = req.body;
-    const match = ADMIN_HASH && await bcrypt.compare(password || "", ADMIN_HASH);
+    const adminHash = await ensureAdminHash();
+    const match = await bcrypt.compare(password || "", adminHash);
     if (match) {
       (req.session as any).authenticated = true;
       res.json({ success: true });
@@ -59,13 +178,18 @@ export async function registerRoutes(server: Server, app: Express) {
   });
 
   app.post("/api/auth/change-password", async (req, res) => {
+    if (!(req.session as any)?.authenticated) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword || newPassword.length < 8) {
       return res.status(400).json({ error: "Invalid request. New password must be at least 8 characters." });
     }
-    const match = ADMIN_HASH && await bcrypt.compare(currentPassword, ADMIN_HASH);
+    const adminHash = await ensureAdminHash();
+    const match = await bcrypt.compare(currentPassword, adminHash);
     if (!match) return res.status(401).json({ error: "Current password is incorrect." });
-    ADMIN_HASH = await bcrypt.hash(newPassword, 10);
+    const nextHash = await bcrypt.hash(newPassword, 10);
+    storage.updateBusinessSettings({ adminPasswordHash: nextHash });
     res.json({ success: true });
   });
 
@@ -426,58 +550,8 @@ export async function registerRoutes(server: Server, app: Express) {
     const date = req.query.date as string;
     const serviceId = Number(req.query.serviceId);
     if (!date || !serviceId) return res.status(400).json({ error: "date and serviceId required" });
-
-    const settings = storage.getBusinessSettings();
-    const service = storage.getService(serviceId);
-    if (!service) return res.status(404).json({ error: "Service not found" });
-
-    if (!settings.bookingEnabled) return res.json({ slots: [], closed: true });
-
-    // Determine operating hours for this day
-    const dayOfWeek = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
-    let openMin = 9 * 60, closeMin = 18 * 60, isOpen = true;
-    if (settings.operatingHours) {
-      try {
-        const hours = JSON.parse(settings.operatingHours);
-        const dayHours = hours[dayOfWeek];
-        if (!dayHours) { isOpen = false; }
-        else {
-          const [oh, om] = (dayHours.open || "09:00").split(":").map(Number);
-          const [ch, cm] = (dayHours.close || "18:00").split(":").map(Number);
-          openMin = oh * 60 + om; closeMin = ch * 60 + cm;
-        }
-      } catch {}
-    }
-    if (!isOpen) return res.json({ slots: [], closed: true });
-
-    // Booking notice window
-    const notice = settings.bookingNotice ?? 60;
-    const today = new Date().toISOString().split("T")[0];
-    const nowMin = date === today ? (new Date().getHours() * 60 + new Date().getMinutes() + notice) : 0;
-
-    // Existing appointment blocks
-    const existing = storage.getAppointmentsByDate(date).filter(
-      a => a.status !== "cancelled" && a.status !== "no_show"
-    );
-    const blocks = existing.map(a => {
-      const svc = storage.getService(a.serviceId);
-      const [h, m] = a.time.split(":").map(Number);
-      const start = h * 60 + m;
-      return { start, end: start + (svc?.duration ?? 30) };
-    });
-
-    // Generate 30-min slots
-    const duration = service.duration;
-    const slots: string[] = [];
-    for (let t = openMin; t + duration <= closeMin; t += 30) {
-      if (t < nowMin) continue;
-      if (!blocks.some(b => t < b.end && t + duration > b.start)) {
-        const h = Math.floor(t / 60).toString().padStart(2, "0");
-        const m = (t % 60).toString().padStart(2, "0");
-        slots.push(`${h}:${m}`);
-      }
-    }
-    res.json({ slots, closed: false });
+    const availability = getAvailabilityForService(date, serviceId);
+    return res.status(availability.status).json(availability.body);
   });
 
   // POST /api/public/book
@@ -486,8 +560,17 @@ export async function registerRoutes(server: Server, app: Express) {
     if (!firstName || !lastName || !serviceId || !date || !time) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    const settings = storage.getBusinessSettings();
-    if (!settings.bookingEnabled) return res.status(403).json({ error: "Booking is disabled" });
+    const availability = getAvailabilityForService(date, Number(serviceId));
+    if (availability.status === 404) {
+      return res.status(availability.status).json(availability.body);
+    }
+    if (availability.body.closed) {
+      return res.status(403).json({ error: "Booking is closed for that day" });
+    }
+    if (!availability.body.slots.includes(time)) {
+      return res.status(409).json({ error: "That time is no longer available" });
+    }
+    const settings = availability.settings;
 
     // Find or create client
     const allClients = storage.getClients();
@@ -503,7 +586,7 @@ export async function registerRoutes(server: Server, app: Express) {
       });
     }
 
-    const appointment = storage.createAppointment({
+    const appointmentOrConflict = storage.bookAppointmentAtomically({
       clientId: client.id,
       serviceId: Number(serviceId),
       date, time, status: "scheduled", depositPaid: false,
@@ -512,6 +595,10 @@ export async function registerRoutes(server: Server, app: Express) {
       notes: notes || null,
       createdAt: new Date().toISOString().split("T")[0],
     });
+    if (appointmentOrConflict === "conflict") {
+      return res.status(409).json({ error: "That time is no longer available" });
+    }
+    const appointment = appointmentOrConflict;
 
     // Log confirmation message
     if (client.phone) {
@@ -752,6 +839,9 @@ export async function registerRoutes(server: Server, app: Express) {
 
   // ── Seed demo data ────────────────────────────────────
   app.post("/api/seed", (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      return res.status(403).json({ error: "Seeding is disabled in production" });
+    }
     const existingServices = storage.getServices();
     if (existingServices.length > 0) {
       return res.json({ message: "Already seeded" });
@@ -850,13 +940,13 @@ export async function registerRoutes(server: Server, app: Express) {
       aftercareTemplate: "Thanks for visiting, {name}! For best results: avoid water for 8 hrs, moisturize daily, and avoid exfoliants for 5 days.",
       rebookingTemplate: "Hi {name}! It's been 2 weeks since your last tan. Ready to glow again? Book your next session: {link}",
       operatingHours: JSON.stringify({
-        mon: { open: "16:30", close: "20:00" },
-        tue: { open: "16:30", close: "20:00" },
-        wed: { open: "16:30", close: "20:00" },
-        thu: { open: "16:30", close: "20:00" },
-        fri: { open: "10:30", close: "13:00" },
-        sat: null,
-        sun: null,
+        Monday: { enabled: true, open: "16:30", close: "20:00" },
+        Tuesday: { enabled: true, open: "16:30", close: "20:00" },
+        Wednesday: { enabled: true, open: "16:30", close: "20:00" },
+        Thursday: { enabled: true, open: "16:30", close: "20:00" },
+        Friday: { enabled: true, open: "10:30", close: "13:00" },
+        Saturday: null,
+        Sunday: null,
       }),
     });
 

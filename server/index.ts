@@ -11,6 +11,9 @@ import rateLimit from "express-rate-limit";
 if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set in production");
 }
+if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PASSWORD) {
+  throw new Error("ADMIN_PASSWORD must be set in production");
+}
 
 const SessionStore = MemoryStore(session);
 
@@ -82,13 +85,14 @@ app.use(express.urlencoded({ extended: false }));
 const publicPaths = [
   "/api/auth/",
   "/api/public/",
-  "/api/seed",
   "/api/intake-questions",
-  "/api/intake-responses",
   "/api/waiver-templates/active",
 ];
 
 app.use("/api/", (req: Request, res: Response, next: NextFunction) => {
+  if (req.method === "POST" && req.path === "/intake-responses") {
+    return next();
+  }
   // Allow public paths
   if (publicPaths.some(p => req.path.startsWith(p.replace("/api", "")))) {
     return next();
