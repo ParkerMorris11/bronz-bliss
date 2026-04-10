@@ -27,12 +27,11 @@ const SqliteStore = SqliteStoreFactory(session);
 const app = express();
 const httpServer = createServer(app);
 
-// Railway (and most PaaS) terminate TLS at their proxy layer.
-// Without this, req.secure is always false and express-session
-// refuses to send Secure cookies — breaking all auth in production.
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+// Railway terminates TLS at the edge and injects X-Forwarded-For /
+// X-Forwarded-Proto. Trust the first proxy unconditionally so that
+// req.secure is correct and express-rate-limit doesn't error on
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+app.set("trust proxy", 1);
 
 declare module "http" {
   interface IncomingMessage {

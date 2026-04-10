@@ -174,7 +174,7 @@ export async function registerRoutes(server: Server, app: Express) {
         res.json({ success: true });
       });
     } else {
-      res.status(200).json({ success: false, error: "Wrong password" });
+      res.status(401).json({ success: false, error: "Wrong password" });
     }
   });
 
@@ -201,6 +201,19 @@ export async function registerRoutes(server: Server, app: Express) {
 
   app.get("/api/auth/check", (req, res) => {
     res.json({ authenticated: !!(req.session as any)?.authenticated });
+  });
+
+  app.get("/api/debug/session", (req, res) => {
+    res.json({
+      sessionId: req.session?.id,
+      authenticated: !!(req.session as any)?.authenticated,
+      trustProxy: req.app.get("trust proxy"),
+      protocol: req.protocol,
+      xForwardedProto: req.headers["x-forwarded-proto"] ?? null,
+      xForwardedFor: req.headers["x-forwarded-for"] ?? null,
+      secure: req.secure,
+      cookieHeader: req.headers.cookie ?? null,
+    });
   });
 
   // ── Dashboard ─────────────────────────────────────────

@@ -4,8 +4,9 @@ const API_BASE = "__PORT_5000__".startsWith("__") ? "" : "__PORT_5000__";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    if (res.status === 401) {
-      // Session expired — reload so the auth check redirects to login
+    if (res.status === 401 && !res.url.includes("/api/auth/login")) {
+      // Session expired — reload so the auth check redirects to login.
+      // Skip for the login endpoint itself (401 there just means wrong password).
       window.location.reload();
     }
     const text = (await res.text()) || res.statusText;
