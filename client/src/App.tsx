@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import Dashboard from "@/pages/Dashboard";
 import Clients from "@/pages/Clients";
 import Appointments from "@/pages/Appointments";
+import Calendar from "@/pages/Calendar";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
@@ -45,6 +46,7 @@ function AppShell() {
             <Route path="/" component={Dashboard} />
             <Route path="/clients" component={Clients} />
             <Route path="/appointments" component={Appointments} />
+            <Route path="/calendar" component={Calendar} />
             <Route component={NotFound} />
           </Switch>
         </main>

@@ -5,7 +5,7 @@ const navItems = [
     section: "Overview",
     items: [
       { href: "/", label: "Dashboard", icon: <GridIcon />, badge: null },
-      { href: "/appointments", label: "Appointments", icon: <CalendarIcon />, badge: null },
+      { href: "/calendar", label: "Calendar", icon: <CalendarIcon />, badge: null },
       { href: "/clients", label: "Clients", icon: <UsersIcon />, badge: null },
     ],
   },
