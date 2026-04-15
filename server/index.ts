@@ -1,3 +1,5 @@
+import { config } from "dotenv";
+config(); // load .env in development
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
