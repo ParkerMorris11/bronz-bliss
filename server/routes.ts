@@ -68,6 +68,16 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.post("/api/services", async (req, res) => {
     res.json(await storage.createService(req.body));
   });
+  // Replace all services with Izzy's real menu (safe to hit on live DB)
+  app.post("/api/services/replace", async (_req, res) => {
+    try {
+      await storage.clearServices();
+      await seedRealServices();
+      res.json({ ok: true, services: await storage.getServices() });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   // Appointments
   app.get("/api/appointments", async (req, res) => {
@@ -147,17 +157,25 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   }
 }
 
+async function seedRealServices() {
+  await Promise.all([
+    storage.createService({ name: "The Custom Tan",            type: "spray",   durationMinutes: 20, price: 35, description: "Classic full-body spray tan",            active: true }),
+    storage.createService({ name: "The Icon Tan (Ultra Dark)", type: "spray",   durationMinutes: 20, price: 45, description: "Ultra dark formula",                    active: true }),
+    storage.createService({ name: "THE BRIDAL TAN",            type: "bridal",  durationMinutes: 30, price: 60, description: "Full bridal glow experience",            active: true }),
+    storage.createService({ name: "The Contour Tan",           type: "contour", durationMinutes: 30, price: 55, description: "Custom contouring + depth blending",     active: true }),
+    storage.createService({ name: "Sweatproof Add-On",         type: "addon",   durationMinutes: 10, price: 10, description: "Sweatproof sealer for long-lasting tan", active: true }),
+    storage.createService({ name: "HYDRATION ADD-ON",          type: "addon",   durationMinutes: 10, price: 10, description: "Deep hydration boost",                  active: true }),
+    storage.createService({ name: "Brazilian Tape Tan Add-On", type: "addon",   durationMinutes: 20, price: 20, description: "Brazilian tape placement",              active: true }),
+    storage.createService({ name: "Mini Contour ADD-ON",       type: "addon",   durationMinutes: 10, price: 15, description: "Subtle contour enhancement",            active: true }),
+  ]);
+}
+
 async function seedDatabase() {
   const existing = await storage.getServices();
   if (existing.length > 0) return; // already seeded
 
-  const svc = await Promise.all([
-    storage.createService({ name: "Classic Spray Tan",       type: "spray",    durationMinutes: 45, price: 55, description: "Full-body spray, 1-hour wait",       active: true }),
-    storage.createService({ name: "Express Bronze",           type: "express",  durationMinutes: 30, price: 45, description: "2-4 hour rapid formula",             active: true }),
-    storage.createService({ name: "Luxury Glow Treatment",    type: "luxury",   durationMinutes: 60, price: 80, description: "Exfoliation + spray + moisturize",   active: true }),
-    storage.createService({ name: "Custom Bronzing",          type: "bronzing", durationMinutes: 45, price: 65, description: "Contour blending + custom depth",     active: true }),
-    storage.createService({ name: "Maintenance Touch-Up",     type: "spray",    durationMinutes: 20, price: 30, description: "Quick maintenance refresh",           active: true }),
-  ]);
+  await seedRealServices();
+  const svc = await storage.getServices();
 
   const today = new Date().toISOString().slice(0, 10);
   const d = (daysAgo: number) => {

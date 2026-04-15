@@ -197,6 +197,13 @@ export const storage = {
     const result = await db.insert(services).values(data).returning();
     return Array.isArray(result) ? result[0] : (result as any).get();
   },
+  async clearServices(): Promise<void> {
+    if (isPostgres) {
+      await pool.query("DELETE FROM services");
+    } else {
+      sqlite.prepare("DELETE FROM services").run();
+    }
+  },
 
   // Appointments
   async getAppointments(date?: string): Promise<Appointment[]> {
