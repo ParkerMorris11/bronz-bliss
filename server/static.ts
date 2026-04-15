@@ -10,19 +10,19 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve static assets (JS, CSS, images) from the dist folder
-  app.use(express.static(distPath));
-
-  // Landing page at root
+  // Landing page at root — must come BEFORE express.static
   app.get("/", (_req, res) => {
     res.sendFile(path.resolve(distPath, "landing.html"));
   });
 
   // Admin SPA at /admin — React handles hash-based sub-routes internally
-  app.use("/admin/{*path}", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
-  });
   app.get("/admin", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
+  app.use("/admin/{*path}", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
+
+  // Serve static assets (JS, CSS, images) — index.html excluded by explicit routes above
+  app.use(express.static(distPath, { index: false }));
 }
